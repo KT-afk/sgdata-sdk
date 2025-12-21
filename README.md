@@ -190,15 +190,6 @@ All data is sourced from Singapore's official [data.gov.sg](https://data.gov.sg)
 - **Weather**: National Environment Agency (NEA)
 - **PSI**: National Environment Agency (NEA)
 
-## Why This SDK?
-
-The previous `data-dot-gov` package (last updated 8 years ago) is outdated and doesn't work with current APIs. This SDK provides:
-
-- ✅ Modern TypeScript support
-- ✅ Current API endpoints (2025)
-- ✅ No API key required (APIs are now public)
-- ✅ Active maintenance
-- ✅ Better developer experience
 
 ## Contributing
 
