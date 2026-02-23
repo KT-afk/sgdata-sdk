@@ -3,6 +3,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    exclude: ['**/manual.test.ts', '**/node_modules/**'],
+    exclude: ['**/manual.test.ts', '**/node_modules/**', 'dist/**'],
   },
 });
