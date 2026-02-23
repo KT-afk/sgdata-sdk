@@ -6,190 +6,170 @@ Modern TypeScript SDK for Singapore Government Open Data APIs. Access real-time 
 
 ## Features
 
-✅ **TypeScript-first** - Full type definitions and IntelliSense support  
-✅ **Zero dependencies** - Lightweight and secure  
-✅ **Modern APIs** - Works with current data.gov.sg endpoints (2025)  
-✅ **No API key required** - Singapore's open data is truly open  
-✅ **Well documented** - JSDoc comments and examples
+- **TypeScript-first** — Full type definitions and IntelliSense support
+- **Zero runtime dependencies** — Lightweight and secure
+- **Automatic retry** — Exponential backoff on 429 and 5xx responses
+- **Typed errors** — `SGDataError` and `SGDataRateLimitError` for precise error handling
+- **Date/time filtering** — All endpoints accept an optional `date_time` parameter
+- **Modern APIs** — Works with current data.gov.sg endpoints
 
 ## Installation
+
 ```bash
 npm install sgdata-sdk
 ```
 
 ## Quick Start
+
 ```typescript
 import { SGDataClient } from 'sgdata-sdk';
 
 const client = new SGDataClient();
 
-// Get real-time carpark availability
+// Real-time carpark availability
 const carparks = await client.getCarparkAvailability();
 console.log(carparks.items[0].carpark_data);
 
-// Get 2-hour weather forecast
+// 2-hour weather forecast
 const weather = await client.getWeatherForecast2H();
 console.log(weather.items[0].forecasts);
 
-// Get air quality (PSI)
+// Air quality (PSI)
 const psi = await client.getPSI();
 console.log(psi.items[0].readings.psi_twenty_four_hourly);
 ```
 
-## Using with API Key (Optional)
+## Configuration
 
-For higher rate limits, sign up at [data.gov.sg](https://data.gov.sg) to get an API key:
 ```typescript
-import { SGDataClient } from 'sgdata-sdk';
-
-// With API key for higher rate limits
-const client = new SGDataClient({ 
-  apiKey: 'your-api-key-here' 
+const client = new SGDataClient({
+  apiKey: 'your-api-key',  // optional — for higher rate limits
+  retries: 3,              // default: 3 (set to 0 to disable)
+  retryDelay: 1000,        // base delay in ms, doubles each retry (default: 1000)
 });
-
-// Without API key (default rate limits apply)
-const client = new SGDataClient();
 ```
 
-**Rate Limits:**
-- Without API key: Standard rate limits apply
-- With API key: 60 requests per minute per endpoint
-
-To get an API key:
-1. Go to https://data.gov.sg
-2. Click "Sign up" in the top right
-3. Follow the registration process
-4. Your API key will be available in your account dashboard
+To get an API key: sign up at [data.gov.sg](https://data.gov.sg) and find it in your account dashboard.
 
 ## API Reference
 
+All methods return typed promises. All methods accept an optional `{ date_time?: string }` parameter (ISO 8601) to query historical data — omit it to get the latest reading.
+
+```typescript
+await client.getTemperature();
+await client.getTemperature({ date_time: '2025-01-15T10:00:00' });
+```
+
 ### Transport
 
-#### `getCarparkAvailability()`
-Get real-time carpark availability across Singapore. Updated every minute.
-```typescript
-const data = await client.getCarparkAvailability();
-// Returns: { items: [{ timestamp, carpark_data: [...] }] }
-```
+| Method | Description | Update frequency |
+|---|---|---|
+| `getCarparkAvailability()` | HDB/LTA/URA carpark lots | Every minute |
+| `getTaxiAvailability()` | GPS coordinates of available taxis | Every 30 seconds |
+| `getTrafficImages()` | Traffic camera images with metadata | Every 20 seconds |
 
-### Weather Forecasts
+### Weather
 
-#### `getWeatherForecast2H()`
-Get 2-hour weather forecast. Updated every 30 minutes.
-```typescript
-const forecast = await client.getWeatherForecast2H();
-// Returns: { area_metadata, items: [{ forecasts: [...] }] }
-```
-
-#### `getWeatherForecast24H()`
-Get 24-hour weather forecast. Updated multiple times daily.
-```typescript
-const forecast = await client.getWeatherForecast24H();
-```
-
-#### `getWeatherForecast4D()`
-Get 4-day weather forecast. Updated twice daily.
-```typescript
-const forecast = await client.getWeatherForecast4D();
-```
+| Method | Description | Update frequency |
+|---|---|---|
+| `getWeatherForecast2H()` | Area-level 2-hour forecast | Every 30 minutes |
+| `getWeatherForecast24H()` | General 24-hour forecast with temperature/wind/humidity | Multiple times daily |
+| `getWeatherForecast4D()` | 4-day outlook | Twice daily |
+| `getUVIndex()` | UV index readings | Hourly, 7AM–7PM |
 
 ### Environment
 
-#### `getPSI()`
-Get current PSI (Pollutant Standards Index) readings. Updated every 15 minutes.
+| Method | Description | Update frequency |
+|---|---|---|
+| `getPSI()` | Pollutant Standards Index by region | Every 15 minutes |
+| `getTemperature()` | Air temperature across weather stations | Every 5 minutes |
+| `getRainfall()` | Rainfall readings across weather stations | Every 5 minutes |
+| `getHumidity()` | Relative humidity across weather stations | Every minute |
+
+## Error Handling
+
 ```typescript
-const psi = await client.getPSI();
-// Returns air quality readings for all regions
-```
-
-#### `getTemperature()`
-Get real-time air temperature across Singapore. Updated every 5 minutes.
-```typescript
-const temp = await client.getTemperature();
-```
-
-#### `getRainfall()`
-Get rainfall readings across Singapore. Updated every 5 minutes.
-```typescript
-const rainfall = await client.getRainfall();
-```
-
-#### `getHumidity()`
-Get relative humidity readings. Updated every minute.
-```typescript
-const humidity = await client.getHumidity();
-```
-
-#### `getUVIndex()`
-Get UV index readings. Updated hourly between 7AM and 7PM.
-```typescript
-const uv = await client.getUVIndex();
-```
-
-## Example Use Cases
-
-### Find Available Parking Near You
-```typescript
-const carparks = await client.getCarparkAvailability();
-const availableNow = carparks.items[0].carpark_data
-  .filter(cp => parseInt(cp.lots_available) > 10)
-  .slice(0, 5);
-console.log('Carparks with 10+ spots:', availableNow);
-```
-
-### Check if You Need an Umbrella
-```typescript
-const weather = await client.getWeatherForecast2H();
-const forecasts = weather.items[0].forecasts;
-const rainy = forecasts.some(f => 
-  f.forecast.toLowerCase().includes('rain')
-);
-console.log(rainy ? '🌧️ Bring umbrella!' : '☀️ No rain expected');
-```
-
-### Air Quality Alert
-```typescript
-const psi = await client.getPSI();
-const national = psi.items[0].readings.psi_twenty_four_hourly.national;
-
-if (national > 100) {
-  console.log('⚠️ Unhealthy air quality');
-} else {
-  console.log('✅ Air quality is good');
-}
-```
-
-## TypeScript Support
-
-This SDK is written in TypeScript and includes full type definitions. You get autocomplete and type checking out of the box:
-```typescript
-import { SGDataClient, CarparkInfo, PSIReading } from 'sgdata-sdk';
+import { SGDataClient, SGDataError, SGDataRateLimitError } from 'sgdata-sdk';
 
 const client = new SGDataClient();
 
-// TypeScript knows the exact structure!
-const carparks = await client.getCarparkAvailability();
-const firstCarpark: CarparkInfo = carparks.items[0].carpark_data[0];
+try {
+  const data = await client.getPSI();
+} catch (error) {
+  if (error instanceof SGDataRateLimitError) {
+    console.log('Rate limited. Retry after:', error.retryAfter, 'seconds');
+  } else if (error instanceof SGDataError) {
+    console.log('API error:', error.statusCode, error.message);
+  }
+}
 ```
 
-## Error Handling
+The SDK automatically retries `429` and `5xx` responses with exponential backoff before throwing. Set `retries: 0` to disable.
+
+## Examples
+
+### Find carparks with availability
+
 ```typescript
-try {
-  const data = await client.getCarparkAvailability();
-  console.log(data);
-} catch (error) {
-  console.error('Failed to fetch data:', error);
-}
+const carparks = await client.getCarparkAvailability();
+const available = carparks.items[0].carpark_data
+  .filter(cp => parseInt(cp.lots_available) > 10);
+console.log(`${available.length} carparks with 10+ spaces`);
+```
+
+### Check if you need an umbrella
+
+```typescript
+const weather = await client.getWeatherForecast2H();
+const rainy = weather.items[0].forecasts.some(f =>
+  f.forecast.toLowerCase().includes('rain')
+);
+console.log(rainy ? 'Bring an umbrella' : 'No rain expected');
+```
+
+### Air quality alert
+
+```typescript
+const psi = await client.getPSI();
+const national = psi.items[0].readings.psi_twenty_four_hourly.national;
+if (national > 100) console.log('Unhealthy air quality today');
+```
+
+### Find available taxis nearby
+
+```typescript
+const taxis = await client.getTaxiAvailability();
+console.log(`${taxis.features.length} taxis available`);
+// Each feature has: geometry.coordinates = [longitude, latitude]
+```
+
+## TypeScript
+
+All response types are exported:
+
+```typescript
+import {
+  SGDataClient,
+  // Transport
+  CarparkInfo, CarparkAvailabilityResponse,
+  TaxiAvailabilityResponse,
+  TrafficCamera, TrafficImagesResponse,
+  // Weather
+  WeatherForecast2HResponse, WeatherForecast24HResponse, WeatherForecast4DResponse,
+  UVIndexResponse,
+  // Environment
+  PSIResponse, TemperatureResponse, RainfallResponse, HumidityResponse,
+  // Errors
+  SGDataError, SGDataRateLimitError,
+} from 'sgdata-sdk';
 ```
 
 ## Data Sources
 
-All data is sourced from Singapore's official [data.gov.sg](https://data.gov.sg) platform.
+All data is from Singapore's official [data.gov.sg](https://data.gov.sg) platform.
 
-- **Carpark Availability**: HDB, LTA, URA carparks
-- **Weather**: National Environment Agency (NEA)
-- **PSI**: National Environment Agency (NEA)
-
+- **Transport**: Land Transport Authority (LTA), HDB, URA
+- **Weather / Environment**: National Environment Agency (NEA)
 
 ## Contributing
 
@@ -197,12 +177,4 @@ Issues and pull requests are welcome on [GitHub](https://github.com/KT-afk/sgdat
 
 ## License
 
-MIT
-
-## Author
-
-Ong Kong Tat - [GitHub](https://github.com/KT-afk)
-
----
-
-Built for Singapore's developer community
+MIT — Ong Kong Tat
