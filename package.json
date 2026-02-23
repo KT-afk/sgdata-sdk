@@ -1,12 +1,14 @@
 {
   "name": "sgdata-sdk",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Modern TypeScript SDK for Singapore Government Open Data APIs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "singapore",
@@ -23,7 +25,8 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.18"
   },
   "repository": {
     "type": "git",
