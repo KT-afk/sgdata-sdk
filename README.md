@@ -171,6 +171,23 @@ All data is from Singapore's official [data.gov.sg](https://data.gov.sg) platfor
 - **Transport**: Land Transport Authority (LTA), HDB, URA
 - **Weather / Environment**: National Environment Agency (NEA)
 
+## Roadmap
+
+### v0.3.0 — LTA DataMall
+
+- `getBusArrival()` — real-time bus arrival times by stop
+- `getBusRoutes()` — full route information for all services
+- `getMRTCrowdDensity()` — platform crowd levels by station
+- `getBusStops()` — stop locations and road names
+
+### Future
+
+- HDB resale prices and flat availability
+- Hawker centre locations and details
+- Response caching with configurable TTL
+
+If there's an endpoint you'd like to see, open an issue on [GitHub](https://github.com/KT-afk/sgdata-sdk).
+
 ## Contributing
 
 Issues and pull requests are welcome on [GitHub](https://github.com/KT-afk/sgdata-sdk).
